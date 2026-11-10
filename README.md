@@ -39,11 +39,20 @@ The output is the same everywhere.
 
 ## Measured
 
-On one Apple M4 Max core, decryption runs at about the speed of OpenSSL
-3.6.5 (`openssl speed -decrypt -evp aes-128-cbc`) and about 8× faster than
-`crypto/cipher`, with zero allocations. The table measured under a load
-below 8 is in the first pull request (#1). `BenchmarkDecrypt`,
-`BenchmarkStdlib` and `BenchmarkDecryptSectors` reproduce it.
+Decryption on one Apple M4 Max core. The figures come from
+`abbench --max-load 8`: 6 interleaved rounds against `crypto/cipher`'s CBC
+decrypter. The reference is OpenSSL 3.6.5 on the same core
+(`openssl speed -decrypt -evp aes-*-cbc -bytes N`):
+
+| | `crypto/cipher` | this package | OpenSSL |
+|---|---|---|---|
+| AES-128, 512 B | 2.03 GB/s | **18.3 GB/s** (104 %) | 17.6 GB/s |
+| AES-128, 4 KiB | 2.59 GB/s | **20.7 GB/s** (101 %) | 20.6 GB/s |
+| AES-256, 512 B | 1.92 GB/s | **14.8 GB/s** (107 %) | 13.8 GB/s |
+| AES-256, 4 KiB | 2.48 GB/s | **15.3 GB/s** (118 %) | 13.0 GB/s |
+
+This package makes zero allocations per call; `crypto/cipher` makes one
+(512 bytes). `BenchmarkDecrypt` and `BenchmarkStdlib` reproduce the table.
 
 ## Checked
 
